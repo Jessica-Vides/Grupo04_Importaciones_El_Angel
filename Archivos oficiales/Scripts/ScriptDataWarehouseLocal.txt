@@ -1,0 +1,120 @@
+--Creación de la base de datos dimensional
+
+CREATE DATABASE `tiendadw`;
+
+-- tiendadw.dim_cliente
+
+CREATE TABLE `dim_cliente` (
+  `cliente_key` int(11) NOT NULL AUTO_INCREMENT,
+  `cliente_id` int(10) NOT NULL,
+  `nombre` varchar(510) DEFAULT NULL,
+  `departamento` varchar(255) DEFAULT NULL,
+  `municipio` varchar(255) DEFAULT NULL,
+  `fecha_de_nacimiento` datetime DEFAULT NULL,
+  `genero` varchar(15) DEFAULT NULL,
+  `scd_start` date DEFAULT NULL,
+  `scd_end` date DEFAULT NULL,
+  `scd_active` int(11) DEFAULT NULL,
+  `previous_departamento` varchar(255) DEFAULT NULL,
+  `previous_municipio` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`cliente_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+
+-- tiendadw.dim_fecha
+
+CREATE TABLE `dim_fecha` (
+  `fecha_id` int(11) NOT NULL,
+  `fecha_completa` date DEFAULT NULL,
+  `anio` int(11) DEFAULT NULL,
+  `trimestre` int(11) DEFAULT NULL,
+  `mes` int(11) DEFAULT NULL,
+  `nombre_mes` varchar(20) DEFAULT NULL,
+  `dia` int(11) DEFAULT NULL,
+  `dia_semana` int(11) DEFAULT NULL,
+  `nombre_dia` varchar(20) DEFAULT NULL,
+  PRIMARY KEY (`fecha_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+-- tiendadw.dim_orden
+
+CREATE TABLE `dim_orden` (
+  `orden_key` int(11) NOT NULL AUTO_INCREMENT,
+  `orden_id` int(10) NOT NULL,
+  `estado` varchar(32) DEFAULT NULL,
+  `metodo` varchar(128) DEFAULT NULL,
+  `gran_total` float(12,4) DEFAULT NULL,
+  `departamento` varchar(255) DEFAULT NULL,
+  `municipio` varchar(255) DEFAULT NULL,
+  `scd_start` datetime DEFAULT NULL,
+  `scd_end` datetime DEFAULT NULL,
+  `scd_active` int(11) DEFAULT NULL,
+  `previous_metodo` varchar(128) DEFAULT NULL,
+  `previous_departamento` varchar(255) DEFAULT NULL,
+  `previous_municipio` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`orden_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+
+-- tiendadw.dim_producto 
+
+CREATE TABLE `dim_producto` (
+  `producto_key` int(11) NOT NULL AUTO_INCREMENT,
+  `producto_id` int(10) NOT NULL,
+  `sku` varchar(64) DEFAULT NULL,
+  `nombre` varchar(510) DEFAULT NULL,
+  `descripcion` text,
+  `scd_start` datetime DEFAULT NULL,
+  `scd_end` datetime DEFAULT NULL,
+  `scd_active` int(11) DEFAULT NULL,
+  PRIMARY KEY (`producto_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+
+-- tiendadw.dim_tienda definition
+
+CREATE TABLE `dim_tienda` (
+  `tienda_key` int(11) NOT NULL AUTO_INCREMENT,
+  `tienda_id` int(10) NOT NULL,
+  `codigo` varchar(32) DEFAULT NULL,
+  `nombre` varchar(510) DEFAULT NULL,
+  PRIMARY KEY (`tienda_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+
+-- tiendadw.fact_venta definition
+
+CREATE TABLE `fact_venta` (
+  `venta_key` int(11) NOT NULL AUTO_INCREMENT,
+  `venta_id` int(10) NOT NULL,
+  `estado` varchar(32) DEFAULT NULL,
+  `cantidad_ordenada` double(12,4) DEFAULT NULL,
+  `precio_producto` double(12,4) DEFAULT NULL,
+  `gran_total` double(12,4) DEFAULT NULL,
+  `monto_base_descuento` double(12,4) DEFAULT NULL,
+  `base_linea_total` double(12,4) DEFAULT NULL,
+  `monto_impuesto_base` double(12,4) DEFAULT NULL,
+  `precio_base_incluyendo_impuestos` double(12,4) DEFAULT NULL,
+  `total_base_linea_incluyendo_impuestos` double(12,4) DEFAULT NULL,
+  `cliente_key` int(10) DEFAULT NULL,
+  `tienda_key` int(10) DEFAULT NULL,
+  `orden_key` int(10) DEFAULT NULL,
+  `producto_key` int(10) DEFAULT NULL,
+  `fecha_de_creacion` int(10) DEFAULT NULL,
+  `scd_start` datetime DEFAULT NULL,
+  `scd_end` datetime DEFAULT NULL,
+  `scd_active` int(11) DEFAULT NULL,
+  `previous_cantidad_ordenada` double(12,4) DEFAULT NULL,
+  PRIMARY KEY (`venta_key`),
+  KEY `fk_fact_dim_tienda` (`tienda_key`),
+  KEY `fk_fact_dim_cliente` (`cliente_key`),
+  KEY `fk_fact_dim_orden` (`orden_key`),
+  KEY `fk_fact_dim_producto` (`producto_key`),
+  KEY `fk_fact_dim_fecha` (`fecha_de_creacion`),
+  CONSTRAINT `fk_fact_dim_cliente` FOREIGN KEY (`cliente_key`) REFERENCES `dim_cliente` (`cliente_key`),
+  CONSTRAINT `fk_fact_dim_fecha` FOREIGN KEY (`fecha_de_creacion`) REFERENCES `dim_fecha` (`fecha_id`),
+  CONSTRAINT `fk_fact_dim_orden` FOREIGN KEY (`orden_key`) REFERENCES `dim_orden` (`orden_key`),
+  CONSTRAINT `fk_fact_dim_producto` FOREIGN KEY (`producto_key`) REFERENCES `dim_producto` (`producto_key`),
+  CONSTRAINT `fk_fact_dim_tienda` FOREIGN KEY (`tienda_key`) REFERENCES `dim_tienda` (`tienda_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;

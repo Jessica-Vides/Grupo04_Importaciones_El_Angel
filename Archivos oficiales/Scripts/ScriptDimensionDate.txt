@@ -1,0 +1,78 @@
+-- Crear la tabla de dimensión de fecha en español
+CREATE TABLE dim_fecha (
+fecha_id INT PRIMARY KEY,
+fecha_completa DATE,
+anio INT,
+trimestre INT,
+mes INT,
+nombre_mes VARCHAR(20),
+dia INT,
+dia_semana INT,
+nombre_dia VARCHAR(20)
+);
+-- Generar los registros de la tabla de dimensión de fecha en español
+INSERT INTO dim_fecha (fecha_id, fecha_completa, anio, trimestre, mes, nombre_mes, dia, dia_semana, nombre_dia)
+SELECT
+DATE_FORMAT(fecha_secuencia, '%Y%m%d') AS fecha_id,
+fecha_secuencia AS fecha_completa,
+YEAR(fecha_secuencia) AS anio,
+QUARTER(fecha_secuencia) AS trimestre,
+MONTH(fecha_secuencia) AS mes,
+MONTHNAME(fecha_secuencia) AS nombre_mes,
+DAY(fecha_secuencia) AS dia,
+DAYOFWEEK(fecha_secuencia) AS dia_semana,
+DAYNAME(fecha_secuencia) AS nombre_dia
+FROM (
+SELECT DATE_ADD('2020-01-01', INTERVAL n DAY) AS fecha_secuencia -- AQUI
+FROM (
+	SELECT a.N + b.N * 10 + c.N * 100 + d.N * 1000 AS n
+	FROM (
+	 SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION
+	 SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9
+	) AS a
+	CROSS JOIN (
+	 SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION
+	 SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9
+	) AS b
+	CROSS JOIN (
+	 SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION
+	 SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9
+	) AS c
+	CROSS JOIN (
+	 SELECT 0 AS N UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION
+	 SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9
+	) AS d
+) AS numeros
+WHERE DATE_ADD('2020-01-01', INTERVAL n DAY) <= '2023-12-31' -- AQUI 2
+) AS secuencia_fechas;
+-- Actualizar la columna nombre_mes a español
+UPDATE dim_fecha
+SET nombre_mes =
+CASE nombre_mes
+WHEN 'January' THEN 'Enero'
+WHEN 'February' THEN 'Febrero'
+WHEN 'March' THEN 'Marzo'
+WHEN 'April' THEN 'Abril'
+WHEN 'May' THEN 'Mayo'
+WHEN 'June' THEN 'Junio'
+WHEN 'July' THEN 'Julio'
+WHEN 'August' THEN 'Agosto'
+WHEN 'September' THEN 'Septiembre'
+WHEN 'October' THEN 'Octubre'
+WHEN 'November' THEN 'Noviembre'
+WHEN 'December' THEN 'Diciembre'
+ELSE nombre_mes -- Mantener cualquier otro valor tal como está
+END;
+-- Actualizar la columna nombre_dia a español
+UPDATE dim_fecha
+SET nombre_dia =
+CASE nombre_dia
+WHEN 'Monday' THEN 'Lunes'
+WHEN 'Tuesday' THEN 'Martes'
+WHEN 'Wednesday' THEN 'Miércoles'
+WHEN 'Thursday' THEN 'Jueves'
+WHEN 'Friday' THEN 'Viernes'
+WHEN 'Saturday' THEN 'Sábado'
+WHEN 'Sunday' THEN 'Domingo'
+ELSE nombre_dia -- Mantener cualquier otro valor tal como está
+END;

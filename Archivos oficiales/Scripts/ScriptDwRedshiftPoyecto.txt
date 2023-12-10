@@ -1,0 +1,126 @@
+CREATE TABLE dim_cliente(
+    cliente_key INTEGER NOT NULL IDENTITY(1,1),
+    cliente_id INTEGER,
+    nombre VARCHAR(510),
+    departamento VARCHAR(255),
+    municipio VARCHAR(255),
+    fecha_de_nacimiento DATETIME,
+    genero VARCHAR(15),
+    scd_start DATETIME,
+    scd_end DATETIME,
+    scd_active INTEGER,
+    previous_departamento VARCHAR(255),
+    previous_municipio VARCHAR(255),
+    PRIMARY KEY (cliente_key)
+)DISTSTYLE AUTO;
+
+CREATE TABLE dim_orden(
+    orden_key INTEGER NOT NULL IDENTITY(1,1),
+    orden_id INTEGER,
+    estado VARCHAR(32),
+    metodo VARCHAR(128),
+    gran_total NUMERIC(12,4),
+    departamento VARCHAR(255),
+    municipio VARCHAR(255),
+    scd_start DATETIME,
+    scd_end DATETIME,
+    scd_active INTEGER,
+    previous_departamento VARCHAR(255),
+    previous_municipio VARCHAR(255),
+    PRIMARY KEY (orden_key)
+)DISTSTYLE AUTO;
+
+
+CREATE TABLE dim_producto(
+    producto_key INTEGER NOT NULL IDENTITY(1,1),
+    producto_id INTEGER,
+    sku VARCHAR(64),
+    nombre VARCHAR(510),
+    descripcion TEXT,
+    scd_start DATETIME,
+    scd_end DATETIME,
+    scd_active INTEGER,
+    PRIMARY KEY (producto_key)
+)DISTSTYLE AUTO;
+
+CREATE TABLE dim_tienda(
+    tienda_key INTEGER NOT NULL IDENTITY(1,1),
+    tienda_id INTEGER,
+    codigo VARCHAR(32),
+    nombre VARCHAR(510),
+    PRIMARY KEY (tienda_key)
+)DISTSTYLE AUTO;
+
+CREATE TABLE fact_venta(
+    venta_key INTEGER NOT NULL IDENTITY(1,1),
+    venta_id INTEGER,
+    estado VARCHAR(32),
+    cantidad_ordenada NUMERIC(12,4),
+    precio_producto NUMERIC(12,4),
+    gran_total NUMERIC(12,4),
+    monto_base_descuento NUMERIC(12,4),
+    base_linea_total NUMERIC(12,4),
+    monto_impuesto_base NUMERIC(12,4),
+    precio_base_incluyendo_impuestos NUMERIC(12,4),
+    total_base_linea_incluyendo_impuestos NUMERIC(12,4),
+    cliente_key INTEGER,
+    tienda_key INTEGER,
+    orden_key INTEGER,
+    producto_key INTEGER,
+    fecha_de_creacion INTEGER,
+    scd_start DATETIME,
+    scd_end DATETIME,
+    scd_active INTEGER,
+    previous_cantidad_ordenada NUMERIC(12,4),
+    PRIMARY KEY (venta_key),
+    FOREIGN KEY (cliente_key) REFERENCES dim_cliente(cliente_key),
+    FOREIGN KEY (tienda_key) REFERENCES dim_tienda(tienda_key),
+    FOREIGN KEY (orden_key) REFERENCES dim_orden(orden_key),
+    FOREIGN KEY (producto_key) REFERENCES dim_producto(producto_key),
+    FOREIGN KEY (fecha_de_creacion) REFERENCES dim_fecha(fecha_id)
+)DISTSTYLE AUTO;
+
+
+CREATE TABLE dim_fecha(
+    fecha_id INTEGER NOT NULL IDENTITY(1,1),
+    fecha_completa DATETIME,
+    anio INTEGER,
+    trimestre INTEGER,
+    mes INTEGER,
+    nombre_mes VARCHAR(20),
+    dia INTEGER,
+    dia_semana INTEGER,
+    nombre_dia VARCHAR(20),
+    PRIMARY KEY (fecha_id)
+)DISTSTYLE AUTO;
+
+
+COPY "importadora-el-angel".public.dim_cliente FROM 's3://importaciones-el-angel-dw/03-presentation/dim_cliente.csv' IAM_ROLE 'arn:aws:iam::068248429043:role/LecturaS3' FORMAT AS CSV DELIMITER ';' QUOTE '"' IGNOREHEADER 1 DATEFORMAT 'dd-MM-yyyy' REGION AS 'us-east-2'
+COPY "importadora-el-angel".public.dim_orden FROM 's3://importaciones-el-angel-dw/03-presentation/dim_orden.csv' IAM_ROLE 'arn:aws:iam::068248429043:role/LecturaS3' FORMAT AS CSV DELIMITER ';' QUOTE '"' IGNOREHEADER 1 DATEFORMAT 'dd-MM-yyyy' REGION AS 'us-east-2'
+COPY "importadora-el-angel".public.dim_fecha FROM 's3://importaciones-el-angel-dw/03-presentation/dim_fecha.csv' IAM_ROLE 'arn:aws:iam::068248429043:role/LecturaS3' FORMAT AS CSV DELIMITER ';' QUOTE '"' IGNOREHEADER 1 DATEFORMAT 'dd-MM-yyyy' REGION AS 'us-east-2'
+COPY "importadora-el-angel".public.dim_producto FROM 's3://importaciones-el-angel-dw/03-presentation/dim_producto.csv' IAM_ROLE 'arn:aws:iam::068248429043:role/LecturaS3' FORMAT AS CSV DELIMITER ';' QUOTE '"' IGNOREHEADER 1 DATEFORMAT 'dd-MM-yyyy' REGION AS 'us-east-2'
+COPY "importadora-el-angel".public.dim_tienda FROM 's3://importaciones-el-angel-dw/03-presentation/dim_tienda.csv' IAM_ROLE 'arn:aws:iam::068248429043:role/LecturaS3' FORMAT AS CSV DELIMITER ';' QUOTE '"' IGNOREHEADER 1 REGION AS 'us-east-2'
+COPY "importadora-el-angel".public.fact_ventas FROM 's3://importaciones-el-angel-dw/03-presentation/fact_ventas.csv' IAM_ROLE 'arn:aws:iam::068248429043:role/LecturaS3' FORMAT AS CSV DELIMITER ';' QUOTE '"' IGNOREHEADER 1 DATEFORMAT 'dd-MM-yyyy' REGION AS 'us-east-2'
+
+
+
+
+ALTER TABLE fact_ventas
+ADD CONSTRAINT fk_cliente
+FOREIGN KEY (cliente_key) REFERENCES dim_cliente(cliente_key);
+
+ALTER TABLE fact_ventas
+ADD CONSTRAINT fk_tienda
+FOREIGN KEY (tienda_key) REFERENCES dim_tienda(tienda_key);
+
+ALTER TABLE fact_ventas
+ADD CONSTRAINT fk_orden
+FOREIGN KEY (orden_key) REFERENCES dim_orden(orden_key);
+
+ALTER TABLE fact_ventas
+ADD CONSTRAINT fk_producto
+FOREIGN KEY (producto_key) REFERENCES dim_producto(producto_key);
+
+ALTER TABLE fact_ventas
+ADD CONSTRAINT fk_fecha
+FOREIGN KEY (fecha_de_creacion) REFERENCES dim_fecha(fecha_id);
